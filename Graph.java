@@ -10,6 +10,7 @@ public class Graph implements GraphADT {
 
     public Graph(int n) {
         //		initialize your representation with empty adjacency lists
+        n++;
         list = new GraphNode[n];
         edge = new ArrayList[n];
 
@@ -24,16 +25,30 @@ public class Graph implements GraphADT {
 //		create and insert the edge
 //		REMEMBER, an edge is accessible from both endpoints, so make sure you add it as an edge for both end nodes		
 
-        GraphEdge newEdge = new GraphEdge(nodeu, nodev, type, label);
-        edge[nodeu.getName()].add(newEdge);
-        edge[nodev.getName()].add(newEdge);
+        try {
+            getEdge(nodeu, nodev);
+        }catch (GraphException e){
+            GraphEdge newEdge = new GraphEdge(nodeu, nodev, type, label);
+            edge[nodeu.getName()].add(newEdge);
+            edge[nodev.getName()].add(newEdge);
+            return;
+        }catch (IndexOutOfBoundsException e) {
+            throw new GraphException("insertEdge Error");
+        }
+        throw new GraphException("insertEdge Error");
+        
     }
 
     @Override
     public GraphNode getNode(int u) throws GraphException {
         //		Return the node with the appropriate name
-        return list[u];
+        try {
+            return list[u];
+        } catch (IndexOutOfBoundsException e) {
+            throw new GraphException("getNode Error");
+        }
     }
+    
 
     @Override
     public Iterator<GraphEdge> incidentEdges(GraphNode u) throws GraphException {
@@ -41,8 +56,8 @@ public class Graph implements GraphADT {
 //		Usually a call to .iterator() should work, unless you do something really exotic
         try {
             return edge[u.getName()].isEmpty() == false ? edge[u.getName()].iterator() : null;
-        } catch (Exception e) {
-            throw new GraphException("Node not in Node List");
+        } catch (IndexOutOfBoundsException e) {
+            throw new GraphException("incidentEdges Error");
         }
 
     }
@@ -60,7 +75,7 @@ public class Graph implements GraphADT {
             } else {
                 i = edge[v.getName()].iterator();
             }
-        } catch (Exception e) {
+        } catch (IndexOutOfBoundsException e) {
             throw new GraphException("Node not in Edge List");
         }
 
@@ -73,7 +88,7 @@ public class Graph implements GraphADT {
                 return e;
             }
         }
-        return null;
+        throw new GraphException("Edge DNE");
     }
 
     @Override
