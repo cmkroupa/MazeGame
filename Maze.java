@@ -2,9 +2,11 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.time.temporal.TemporalAdjuster;
 import java.util.Iterator;
 import java.util.Stack;
 import java.util.StringTokenizer;
+import org.w3c.dom.Node;
 
 public class Maze {
 
@@ -24,12 +26,13 @@ public class Maze {
     public Maze(String inputFile) throws MazeException {
 //		initialize your graph variable by reading the input file!
 //		to maintain your code as clean and easy to debug as possible use the provided private helper method
+        stack = new Stack<GraphNode>();
         try {
-            StringTokenizer terminal_comand =  new StringTokenizer(inputFile, " ");
+            StringTokenizer terminal_comand = new StringTokenizer(inputFile, " ");
             String line = "";
-            while(terminal_comand.hasMoreTokens()){
+            while (terminal_comand.hasMoreTokens()) {
                 line = terminal_comand.nextToken();
-                if(terminal_comand.hasMoreTokens() == false){
+                if (terminal_comand.hasMoreTokens() == false) {
                     break;
                 }
             }
@@ -51,12 +54,13 @@ public class Maze {
         try {
             Iterator<GraphNode> reverse_path = DFS(start, coins);
             Stack<GraphNode> path = new Stack<GraphNode>();
-            if(reverse_path != null){
-                while (reverse_path.hasNext()) { 
+            if (reverse_path != null) {
+                while (reverse_path.hasNext()) {
                     path.push(reverse_path.next());
                 }
+                clear_stack();
                 return path.iterator();
-            }    
+            }
         } catch (Exception e) {
             System.out.println("SOLVING ERROR");
             System.out.println(e.getMessage());
@@ -68,7 +72,7 @@ public class Maze {
 //		perform a DFS of your graph. Reduce your k which represents the remaining coins
 //		start with the base case
 //		remember to return null if you didn't find a path
-        if(go == exit){
+        if (go == exit) {
             return stack.iterator();
         }
         if (k <= 0) {
@@ -79,27 +83,22 @@ public class Maze {
 
         try {
             Iterator<GraphEdge> i = graph.incidentEdges(go);
-            Iterator<GraphNode> maybe_path = null;
             boolean option_marked;
 
-            if (i.hasNext()) {
+            while (i.hasNext()) {
                 GraphEdge option = i.next();
                 option_marked = false;
 
-                if (option.firstEndpoint() == go) {
-                    if (option.secondEndpoint().isMarked()) {
-                        option_marked = true;
-                    }
+                if (option.secondEndpoint().isMarked()) {
+                    option_marked = true;
                 }
 
                 if (option_marked == false) {
                     String label = option.getLabel();
                     if ((label.equals("corridor")) || (label.equals("door") && k - option.getType() >= 0)) {
-                        maybe_path = DFS(option.secondEndpoint(), k - option.getType());
+                        Iterator<GraphNode> maybe_path = DFS(option.secondEndpoint(), k - option.getType());
                         if (maybe_path != null) {
-                            Iterator<GraphNode> path = stack.iterator();
-                            clear_stack();
-                            return path;
+                            return stack.iterator();
                         }
                     }
                 }
@@ -112,8 +111,8 @@ public class Maze {
         return null;
     }
 
-    private void clear_stack(){
-        while(stack.isEmpty() == false){
+    private void clear_stack() {
+        while (stack.isEmpty() == false) {
             stack.pop().mark(false);
         }
     }
@@ -124,79 +123,139 @@ public class Maze {
         //		remember to identify the starting and ending rooms
         //		The input will have size A + A-1 and L + L-1 because every pair of nodes has its relationship inbetween them in the textual representation!
         //		To maintain this method cleaner, you may use the private helper method insertEdge
-        try {
-            int S = Integer.parseInt(inputReader.readLine()); //Read unused var S
-            int A = Integer.parseInt(inputReader.readLine());
-            int L = Integer.parseInt(inputReader.readLine());
-            int K = Integer.parseInt(inputReader.readLine());
-            
-            this.graph = new Graph(A * L);
-            this.coins = K;
-            for (int i = 0; i < L; i++) {
-                String line = inputReader.readLine();
 
-                if (i % 2 == 0) {
-                    for (int j = 0; j < A; j++) {
-                        if(j % 2 == 0){
-                            switch (line.charAt(j)) {
-                                case 's':
-                                    start = graph.getNode(i * A + j);
-                                    break;
-                                case 'x':
-                                    exit = graph.getNode(i * A + j);
-                                    break;
-                                default:
-                                    break;
-                            }
-                        }else{
-                            switch (line.charAt(j)) {
-                                case 'w':
-                                    insertEdge(i * A + j -1, i * A + j + 1, -1, "wall");
-                                    break;
-                                case 'c':
-                                    insertEdge(i * A + j - 1, i * A + j + 1, -1, "corridor");
-                                    break;
-                                default:
-                                    insertEdge(i * A + j - 1, i * A + j + 1, line.charAt(j)-'0', "door");
-                                    break;
-                            }
-                        }
-                    }
-                } else {
-                    for (int j = 0; j < A; j++) {
-                        if (j % 2 == 0) {
-                            switch (line.charAt(j)) {
-                                case 'w':
-                                    insertEdge(i * A + j - 1, i * A + j + 1, -1, "wall");
-                                    break;
-                                case 'c':
-                                    insertEdge(i * A + j - 1, i * A + j + 1, -1, "corridor");
-                                    break;
-                                default:
-                                    insertEdge(i * A + j - 1, i * A + j + 1, line.charAt(j) - '0', "door");
-                                    break;
-                            }
-                        }
-                        else{
-                            insertEdge(i * A + j -1, i * A + j + 1, -1, "wall");
-                        }
-                    }
+        int S = Integer.parseInt(inputReader.readLine()); //Read unused var S
+        int A = Integer.parseInt(inputReader.readLine());
+        int L = Integer.parseInt(inputReader.readLine());
+        int K = Integer.parseInt(inputReader.readLine());
+
+        A = A * 2 - 1; //Readjust Width
+        L = L * 2 - 1;
+        this.coins = K;
+        graph = new Graph(A * L);
+
+        String[][] maze_grid = new String[L][A];
+        for (int i = 0; i < L; i++) {
+            String line = inputReader.readLine();
+            for (int j = 0; j < A; j++) {
+                maze_grid[i][j] = line.charAt(j) + "";
+            }
+        }
+
+        for (int i = 0; i < L; i++) {
+            for (int j = 0; j < A; j++) {
+                System.out.print(maze_grid[i][j] + ' ');
+            }
+            System.out.println();
+        }
+        for (int i = 0; i < L; i++) {
+            for (int j = 0; j < A; j++) {
+                System.out.print("(" + (A * i + j) + ") ");
+            }
+            System.out.println();
+        }
+        inputReader.close();
+
+        for (int i = 0; i < maze_grid.length; i += 2) {
+            for (int j = 0; j < maze_grid[i].length - 2; j += 2) {
+                int horizontal_type = 0;
+                String edge_label = "";
+                switch (maze_grid[i][j + 1].charAt(0)) {
+                    case 'w':
+                        edge_label = "wall";
+                        horizontal_type = -1;
+                        break;
+                    case 'c':
+                        edge_label = "corridor";
+                        horizontal_type = 0;
+                        break;
+                    default:
+                        edge_label = "door";
+                        horizontal_type = maze_grid[i][j + 1].charAt(0) - '0';
+                        break;
                 }
 
+                //check for s or x 
+                switch (maze_grid[i][j].charAt(0)) {
+                    case 's':
+                        start = graph.getNode(A * i + j);
+                        break;
+                    case 'x':
+                        exit = graph.getNode(A * i + j);
+                        break;
+                }
+                switch (maze_grid[i][j + 2].charAt(0)) {
+                    case 's':
+                        start = graph.getNode(A * i + j + 2);
+                        break;
+                    case 'x':
+                        exit = graph.getNode(A * i + j + 2);
+                        break;
+                }
+                insertEdge(A * i + j, A * i + j + 2, horizontal_type, edge_label);
             }
-            inputReader.close();
-        } catch (Exception e) {
-            throw e;
         }
-        
+
+        for (int i = 0; i < maze_grid.length - 2; i += 2) {
+            for (int j = 0; j < maze_grid[i].length; j += 2) {
+                int vertical_type = 0;
+                String edge_label = "";
+                switch (maze_grid[i + 1][j].charAt(0)) {
+                    case 'w':
+                        edge_label = "wall";
+                        vertical_type = -1;
+                        break;
+                    case 'c':
+                        edge_label = "corridor";
+                        vertical_type = 0;
+                        break;
+                    default:
+                        edge_label = "door";
+                        vertical_type = maze_grid[i + 1][j].charAt(0) - '0';
+                        break;
+                }
+
+                //check for s or x 
+                switch (maze_grid[i][j].charAt(0)) {
+                    case 's':
+                        start = graph.getNode(A * i + j);
+                        break;
+                    case 'x':
+                        exit = graph.getNode(A * i + j);
+                        break;
+                }
+                switch (maze_grid[i + 2][j].charAt(0)) {
+                    case 's':
+                        start = graph.getNode(A * (i + 2) + j + 2);
+                        break;
+                    case 'x':
+                        exit = graph.getNode(A * (i + 2) + j + 2);
+                        break;
+                }
+                insertEdge(A * i + j, A * (i + 2) + j, vertical_type, edge_label);
+            }
+        }
+
     }
 
     private void insertEdge(int node1, int node2, int linkType, String label) throws GraphException {
-        try {
-            graph.insertEdge(graph.getNode(node1),graph.getNode(node2),linkType,label);
-        } catch (GraphException e) {
-            throw e;
-        }
+        graph.insertEdge(graph.getNode(node1), graph.getNode(node2), linkType, label);
     }
 
+    public static void main(String[] args) {
+        try {
+            Maze tester = new Maze("java Solve maze0.txt");
+            Graph graph = tester.getGraph();
+            for (int i = 1; i < 40; i++) {
+                GraphNode node = graph.getNode(i);
+                Iterator<GraphEdge> edges = graph.incidentEdges(node);
+                if (edges.hasNext()) {
+                    GraphEdge next = edges.next();
+                    System.out.print(i + "-->" + next.secondEndpoint().getName());
+                }
+            }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+    }
 }

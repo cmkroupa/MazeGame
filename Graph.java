@@ -22,21 +22,26 @@ public class Graph implements GraphADT {
 
     @Override
     public void insertEdge(GraphNode nodeu, GraphNode nodev, int type, String label) throws GraphException {
-//		create and insert the edge
-//		REMEMBER, an edge is accessible from both endpoints, so make sure you add it as an edge for both end nodes		
+
+        //		create and insert the edge
+        //		REMEMBER, an edge is accessible from both endpoints, so make sure you add it as an edge for both end nodes		
+        boolean state = true;
 
         try {
             getEdge(nodeu, nodev);
-        }catch (GraphException e){
-            GraphEdge newEdge = new GraphEdge(nodeu, nodev, type, label);
-            edge[nodeu.getName()].add(newEdge);
-            edge[nodev.getName()].add(newEdge);
-            return;
-        }catch (IndexOutOfBoundsException e) {
-            throw new GraphException("insertEdge Error");
+            state = false;
+        } catch (GraphException e) {
         }
-        throw new GraphException("insertEdge Error");
-        
+        if (state) {
+            if (getNode(nodeu.getName()) != nodeu && getNode(nodev.getName()) != nodev) {
+                throw new GraphException("Node not in list");
+            }
+            edge[nodeu.getName()].add(new GraphEdge(nodeu, nodev, type, label));
+            edge[nodev.getName()].add(new GraphEdge(nodev, nodeu, type, label));
+        } else {
+            throw new GraphException("Edge already in list");
+        }
+
     }
 
     @Override
@@ -48,7 +53,6 @@ public class Graph implements GraphADT {
             throw new GraphException("getNode Error");
         }
     }
-    
 
     @Override
     public Iterator<GraphEdge> incidentEdges(GraphNode u) throws GraphException {
@@ -69,22 +73,19 @@ public class Graph implements GraphADT {
 //		there are faster ways too ;)
 
         Iterator<GraphEdge> i;
-        try {
-            if (edge[u.getName()].size() >= edge[v.getName()].size()) {
-                i = edge[u.getName()].iterator();
-            } else {
-                i = edge[v.getName()].iterator();
-            }
-        } catch (IndexOutOfBoundsException e) {
-            throw new GraphException("Node not in Edge List");
+
+        if (edge[u.getName()].size() >= edge[v.getName()].size()) {
+            i = edge[u.getName()].iterator();
+        } else {
+            i = edge[v.getName()].iterator();
         }
 
         while (i.hasNext()) {
             GraphEdge e = i.next();
-            if (e.firstEndpoint().getName() == u.getName() && e.secondEndpoint().getName() == v.getName()) {
+            if (e.firstEndpoint() == u && e.secondEndpoint() == v) {
                 return e;
             }
-            if (e.firstEndpoint().getName() == v.getName() && e.secondEndpoint().getName() == u.getName()) {
+            if (e.firstEndpoint() == v && e.secondEndpoint() == u) {
                 return e;
             }
         }
