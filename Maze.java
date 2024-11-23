@@ -32,12 +32,10 @@ public class Maze {
             String line = "";
             while (terminal_comand.hasMoreTokens()) {
                 line = terminal_comand.nextToken();
-                if (terminal_comand.hasMoreTokens() == false) {
-                    break;
-                }
             }
             readInput(new BufferedReader(new FileReader(line)));
         } catch (Exception e) {
+            System.out.println("CREATION ERROR");
             System.out.println(e.getMessage());
         }
 
@@ -125,117 +123,135 @@ public class Maze {
         //		To maintain this method cleaner, you may use the private helper method insertEdge
 
         int S = Integer.parseInt(inputReader.readLine()); //Read unused var S
-        int A = Integer.parseInt(inputReader.readLine());
-        int L = Integer.parseInt(inputReader.readLine());
+        int l = Integer.parseInt(inputReader.readLine());
+        int w = Integer.parseInt(inputReader.readLine());
         int K = Integer.parseInt(inputReader.readLine());
-
-        A = A * 2 - 1; //Readjust Width
-        L = L * 2 - 1;
+        graph = new Graph(w * l);
         this.coins = K;
-        graph = new Graph(A * L);
+        
+        System.out.println("w="+w);
+        System.out.println("l=" + l);
 
-        String[][] maze_grid = new String[L][A];
-        for (int i = 0; i < L; i++) {
+        //read text = double array
+        String[][] maze_grid = new String[w*2 -1][l*2 -1];
+        for (int i = 0; i < w * 2 - 1; i++) {
             String line = inputReader.readLine();
-            for (int j = 0; j < A; j++) {
+            for (int j = 0; j < l * 2 - 1; j++) {
                 maze_grid[i][j] = line.charAt(j) + "";
             }
         }
 
-        for (int i = 0; i < L; i++) {
-            for (int j = 0; j < A; j++) {
-                System.out.print(maze_grid[i][j] + ' ');
+        System.out.println();
+        /*DEBUGGING TEST PRINT */
+        for (int i = 0; i < w * 2 - 1; i++) {
+            for (int j = 0; j < l * 2 - 1; j++) {
+                System.out.print(maze_grid[i][j] + " ");
             }
             System.out.println();
         }
-        for (int i = 0; i < L; i++) {
-            for (int j = 0; j < A; j++) {
-                System.out.print("(" + (A * i + j) + ") ");
+
+        System.out.println();
+        /*DEBUGGING TEST PRINT */
+        for (int i = 0; i < w; i++) {
+            for(int j =0; j < l; j++) {
+                System.out.print(i*(w+1)+j+" ");
             }
             System.out.println();
         }
+
+
         inputReader.close();
 
-        for (int i = 0; i < maze_grid.length; i += 2) {
-            for (int j = 0; j < maze_grid[i].length - 2; j += 2) {
-                int horizontal_type = 0;
-                String edge_label = "";
-                switch (maze_grid[i][j + 1].charAt(0)) {
+        String edge_label = "";
+        int type = 0;
+
+
+        //horizontal edges
+        int[] current_node;
+
+        for (int i = 0; i < w; i++) {
+            int j = 0;
+            while(j < l-1) {
+                current_node = maze_rep(i, j);
+                int[] right_edge = right_node_maze(i, j);
+
+                switch (maze_grid[current_node[0]][current_node[1]].charAt(0)){
+                    case 's':
+                        start = graph.getNode(i * l + j);
+                        break;
+                    case 'x':
+                        exit = graph.getNode(i * l + j);
+                        break;
+                }
+
+                switch (maze_grid[right_edge[0]][right_edge[1]].charAt(0)) {
                     case 'w':
                         edge_label = "wall";
-                        horizontal_type = -1;
+                        type = -1;
                         break;
                     case 'c':
                         edge_label = "corridor";
-                        horizontal_type = 0;
+                        type = 0;
                         break;
                     default:
                         edge_label = "door";
-                        horizontal_type = maze_grid[i][j + 1].charAt(0) - '0';
+                        type = maze_grid[right_edge[0]][right_edge[1]].charAt(0) - '0';
                         break;
                 }
-
-                //check for s or x 
-                switch (maze_grid[i][j].charAt(0)) {
+                current_node = maze_rep(i, j);
+                switch (maze_grid[current_node[0]][current_node[1]].charAt(0)) {
                     case 's':
-                        start = graph.getNode(A * i + j);
+                        start = graph.getNode(i * l + j);
                         break;
                     case 'x':
-                        exit = graph.getNode(A * i + j);
+                        exit = graph.getNode(i * l + j);
                         break;
                 }
-                switch (maze_grid[i][j + 2].charAt(0)) {
-                    case 's':
-                        start = graph.getNode(A * i + j + 2);
-                        break;
-                    case 'x':
-                        exit = graph.getNode(A * i + j + 2);
-                        break;
-                }
-                insertEdge(A * i + j, A * i + j + 2, horizontal_type, edge_label);
+                insertEdge(i * l + j, i * l + j+1, type, edge_label);
+                System.out.println("inserted: "+(i * l+ j)+"<--->"+(i * l + j+1));
+                j++;
             }
         }
 
-        for (int i = 0; i < maze_grid.length - 2; i += 2) {
-            for (int j = 0; j < maze_grid[i].length; j += 2) {
-                int vertical_type = 0;
-                String edge_label = "";
-                switch (maze_grid[i + 1][j].charAt(0)) {
+        //vertical edges
+        for (int i = 0; i < w-1; i++) {
+            int j = 0;
+            while (j < l) {
+                int[] down_edge = under_node_maze(i, j);
+
+                switch (maze_grid[down_edge[0]][down_edge[1]].charAt(0)) {
                     case 'w':
                         edge_label = "wall";
-                        vertical_type = -1;
+                        type = -1;
                         break;
                     case 'c':
                         edge_label = "corridor";
-                        vertical_type = 0;
+                        type = 0;
                         break;
                     default:
                         edge_label = "door";
-                        vertical_type = maze_grid[i + 1][j].charAt(0) - '0';
+                        type = maze_grid[down_edge[0]][down_edge[1]].charAt(0) - '0';
                         break;
                 }
-
-                //check for s or x 
-                switch (maze_grid[i][j].charAt(0)) {
-                    case 's':
-                        start = graph.getNode(A * i + j);
-                        break;
-                    case 'x':
-                        exit = graph.getNode(A * i + j);
-                        break;
-                }
-                switch (maze_grid[i + 2][j].charAt(0)) {
-                    case 's':
-                        start = graph.getNode(A * (i + 2) + j + 2);
-                        break;
-                    case 'x':
-                        exit = graph.getNode(A * (i + 2) + j + 2);
-                        break;
-                }
-                insertEdge(A * i + j, A * (i + 2) + j, vertical_type, edge_label);
+                insertEdge(i * l + j, (i+1) * l + j, type, edge_label);
+                System.out.println("inserted: " + (i * l + j) + "<--->" + ((i + 1) * l + j));
+                j++;
             }
         }
+    }
 
+    private int[] maze_rep(int x, int y) {
+        return new int[]{x * 2, y * 2};
+    }
+
+    private int[] right_node_maze(int x, int y) {
+        int[] cords = maze_rep(x, y);
+        return new int[]{cords[0], cords[1]+2};
+    }
+
+    private int[] under_node_maze(int x, int y) {
+        int[] cords = maze_rep(x, y);
+        return new int[]{cords[0]+2, cords[1]};
     }
 
     private void insertEdge(int node1, int node2, int linkType, String label) throws GraphException {
@@ -246,13 +262,14 @@ public class Maze {
         try {
             Maze tester = new Maze("java Solve maze0.txt");
             Graph graph = tester.getGraph();
-            for (int i = 1; i < 40; i++) {
-                GraphNode node = graph.getNode(i);
-                Iterator<GraphEdge> edges = graph.incidentEdges(node);
-                if (edges.hasNext()) {
-                    GraphEdge next = edges.next();
-                    System.out.print(i + "-->" + next.secondEndpoint().getName());
+            for (int i = 0; i < 20; i++) {
+                Iterator<GraphEdge> it = graph.incidentEdges(graph.getNode(i));
+                System.out.println("Node: " + i);
+                while (it.hasNext()) {
+                    GraphEdge edge = it.next();
+                    System.out.println("---Edge: " + edge.firstEndpoint().getName() + "-->" + edge.secondEndpoint().getName());
                 }
+                System.out.println();
             }
         } catch (Exception e) {
             System.out.println(e.getMessage());

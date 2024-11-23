@@ -1,21 +1,21 @@
 
-import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedList;
 
 public class Graph implements GraphADT {
 
     //	Create an adjacency list or an adjacency matrix, a list is probably easier
     final private GraphNode[] list;
-    final private ArrayList<GraphEdge>[] edge;
+    final private LinkedList<GraphEdge>[] edge;
 
     public Graph(int n) {
         //		initialize your representation with empty adjacency lists
-        list = new GraphNode[n];
-        edge = new ArrayList[n];
+        list = new GraphNode[n+1];
+        edge = new LinkedList[n+1];
 
         for (int i = 0; i < n; i++) {
             list[i] = new GraphNode(i);
-            edge[i] = new ArrayList<>();
+            edge[i] = new LinkedList<>();
         }
     }
 
@@ -23,19 +23,18 @@ public class Graph implements GraphADT {
     public void insertEdge(GraphNode nodeu, GraphNode nodev, int type, String label) throws GraphException {
 //		create and insert the edge
 //		REMEMBER, an edge is accessible from both endpoints, so make sure you add it as an edge for both end nodes		
-
+        if (!nodes_in_graph(nodeu, nodev)) {
+            throw new GraphException("insertEdge: Nodes not in list");
+        }
         try {
             getEdge(nodeu, nodev);
         } catch (GraphException e) {
-            GraphEdge newEdge = new GraphEdge(nodeu, nodev, type, label);
-            edge[nodeu.getName()].add(newEdge);
-            edge[nodev.getName()].add(newEdge);
+            edge[nodeu.getName()].add(new GraphEdge(nodeu, nodev, type, label));
+            edge[nodev.getName()].add(new GraphEdge(nodev, nodeu, type, label));
             return;
-        } catch (IndexOutOfBoundsException e) {
-            throw new GraphException("insertEdge Error");
         }
-        throw new GraphException("insertEdge Error");
-
+        throw new GraphException("insertEdge: Edge already exists");
+        
     }
 
     @Override
