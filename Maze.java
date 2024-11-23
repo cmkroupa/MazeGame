@@ -57,10 +57,10 @@ public class Maze {
                     path.push(reverse_path.next());
                 }
                 clear_stack();
+                printStack(path);
                 return path.iterator();
             }
         } catch (Exception e) {
-            System.out.println("SOLVING ERROR");
             System.out.println(e.getMessage());
         }
         return null;
@@ -70,30 +70,26 @@ public class Maze {
 //		perform a DFS of your graph. Reduce your k which represents the remaining coins
 //		start with the base case
 //		remember to return null if you didn't find a path
-        if (go == exit) {
-            return stack.iterator();
-        }
-        if (k <= 0) {
-            return null;
-        }
         go.mark(true);
         stack.push(go);
+        if (go == exit) {
+            System.out.println("FOUND EXIT");
+            return stack.iterator();
+        }
 
         try {
             Iterator<GraphEdge> i = graph.incidentEdges(go);
             boolean option_marked;
-
             while (i.hasNext()) {
                 GraphEdge option = i.next();
                 option_marked = false;
-
                 if (option.secondEndpoint().isMarked()) {
                     option_marked = true;
                 }
 
                 if (option_marked == false) {
                     String label = option.getLabel();
-                    if ((label.equals("corridor")) || (label.equals("door") && k - option.getType() >= 0)) {
+                    if ((label.equals("corridor") || label.equals("door") )&& k - option.getType() >= 0) {
                         Iterator<GraphNode> maybe_path = DFS(option.secondEndpoint(), k - option.getType());
                         if (maybe_path != null) {
                             return stack.iterator();
@@ -107,6 +103,24 @@ public class Maze {
             throw e;
         }
         return null;
+    }
+
+    private void stack_iterator(){
+
+    }
+
+    private void printStack(Stack<GraphNode> path){
+        Stack<GraphNode> copy = new Stack<GraphNode>();
+        while(path.isEmpty() == false){
+            GraphNode node = path.pop();
+            System.out.print(node.getName()+"<--");
+            copy.add(node);
+        }
+        System.out.println();
+        while (copy.isEmpty() == false) {
+            path.add(copy.pop());
+        }
+        System.out.println();
     }
 
     private void clear_stack() {
@@ -128,9 +142,6 @@ public class Maze {
         int K = Integer.parseInt(inputReader.readLine());
         graph = new Graph(w * l);
         this.coins = K;
-        
-        System.out.println("w="+w);
-        System.out.println("l=" + l);
 
         //read text = double array
         String[][] maze_grid = new String[w*2 -1][l*2 -1];
@@ -140,26 +151,6 @@ public class Maze {
                 maze_grid[i][j] = line.charAt(j) + "";
             }
         }
-
-        System.out.println();
-        /*DEBUGGING TEST PRINT */
-        for (int i = 0; i < w * 2 - 1; i++) {
-            for (int j = 0; j < l * 2 - 1; j++) {
-                System.out.print(maze_grid[i][j] + " ");
-            }
-            System.out.println();
-        }
-
-        System.out.println();
-        /*DEBUGGING TEST PRINT */
-        for (int i = 0; i < w; i++) {
-            for(int j =0; j < l; j++) {
-                System.out.print(i*(w+1)+j+" ");
-            }
-            System.out.println();
-        }
-
-
         inputReader.close();
 
         String edge_label = "";
@@ -208,7 +199,6 @@ public class Maze {
                         break;
                 }
                 insertEdge(i * l + j, i * l + j+1, type, edge_label);
-                System.out.println("inserted: "+(i * l+ j)+"<--->"+(i * l + j+1));
                 j++;
             }
         }
@@ -234,7 +224,6 @@ public class Maze {
                         break;
                 }
                 insertEdge(i * l + j, (i+1) * l + j, type, edge_label);
-                System.out.println("inserted: " + (i * l + j) + "<--->" + ((i + 1) * l + j));
                 j++;
             }
         }
@@ -246,33 +235,15 @@ public class Maze {
 
     private int[] right_node_maze(int x, int y) {
         int[] cords = maze_rep(x, y);
-        return new int[]{cords[0], cords[1]+2};
+        return new int[]{cords[0], cords[1]+1};
     }
 
     private int[] under_node_maze(int x, int y) {
         int[] cords = maze_rep(x, y);
-        return new int[]{cords[0]+2, cords[1]};
+        return new int[]{cords[0]+1, cords[1]};
     }
 
     private void insertEdge(int node1, int node2, int linkType, String label) throws GraphException {
         graph.insertEdge(graph.getNode(node1), graph.getNode(node2), linkType, label);
-    }
-
-    public static void main(String[] args) {
-        try {
-            Maze tester = new Maze("java Solve maze0.txt");
-            Graph graph = tester.getGraph();
-            for (int i = 0; i < 20; i++) {
-                Iterator<GraphEdge> it = graph.incidentEdges(graph.getNode(i));
-                System.out.println("Node: " + i);
-                while (it.hasNext()) {
-                    GraphEdge edge = it.next();
-                    System.out.println("---Edge: " + edge.firstEndpoint().getName() + "-->" + edge.secondEndpoint().getName());
-                }
-                System.out.println();
-            }
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-        }
     }
 }
