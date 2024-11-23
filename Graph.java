@@ -10,7 +10,6 @@ public class Graph implements GraphADT {
 
     public Graph(int n) {
         //		initialize your representation with empty adjacency lists
-        n++;
         list = new GraphNode[n];
         edge = new ArrayList[n];
 
@@ -22,48 +21,44 @@ public class Graph implements GraphADT {
 
     @Override
     public void insertEdge(GraphNode nodeu, GraphNode nodev, int type, String label) throws GraphException {
-
-        //		create and insert the edge
-        //		REMEMBER, an edge is accessible from both endpoints, so make sure you add it as an edge for both end nodes		
-        boolean state = true;
+//		create and insert the edge
+//		REMEMBER, an edge is accessible from both endpoints, so make sure you add it as an edge for both end nodes		
 
         try {
             getEdge(nodeu, nodev);
-            state = false;
         } catch (GraphException e) {
+            GraphEdge newEdge = new GraphEdge(nodeu, nodev, type, label);
+            edge[nodeu.getName()].add(newEdge);
+            edge[nodev.getName()].add(newEdge);
+            return;
+        } catch (IndexOutOfBoundsException e) {
+            throw new GraphException("insertEdge Error");
         }
-        if (state) {
-            if (getNode(nodeu.getName()) != nodeu && getNode(nodev.getName()) != nodev) {
-                throw new GraphException("Node not in list");
-            }
-            edge[nodeu.getName()].add(new GraphEdge(nodeu, nodev, type, label));
-            edge[nodev.getName()].add(new GraphEdge(nodev, nodeu, type, label));
-        } else {
-            throw new GraphException("Edge already in list");
-        }
+        throw new GraphException("insertEdge Error");
 
     }
 
     @Override
     public GraphNode getNode(int u) throws GraphException {
         //		Return the node with the appropriate name
-        try {
-            return list[u];
-        } catch (IndexOutOfBoundsException e) {
-            throw new GraphException("getNode Error");
+        if (u < 0 || u > list.length) {
+            throw new GraphException("U out of Bounds");
         }
+        return list[u];
     }
 
     @Override
     public Iterator<GraphEdge> incidentEdges(GraphNode u) throws GraphException {
 //		Select from your adjacency list the appropriate Node and return an iterator over the collection.
 //		Usually a call to .iterator() should work, unless you do something really exotic
-        try {
-            return edge[u.getName()].isEmpty() == false ? edge[u.getName()].iterator() : null;
-        } catch (IndexOutOfBoundsException e) {
-            throw new GraphException("incidentEdges Error");
+        if (!nodes_in_graph(u, u)) {
+            throw new GraphException("incidentEdges: NODES NOT IN GRAPH");
         }
 
+        if (edge[u.getName()].isEmpty()) {
+            return null;
+        }
+        return edge[u.getName()].iterator();
     }
 
     @Override
@@ -72,30 +67,48 @@ public class Graph implements GraphADT {
 //		find the appropriate edge and return it, if no such edge exists remember to return null 
 //		there are faster ways too ;)
 
+        //check if u and v are the proper nodes in the list
+        if (!nodes_in_graph(u, v)) {
+            throw new GraphException("getEdge: NODES NOT IN GRAPH");
+        }
+
+        //find which is smaller and get its iterator for edges
         Iterator<GraphEdge> i;
-
-        if (edge[u.getName()].size() >= edge[v.getName()].size()) {
-            i = edge[u.getName()].iterator();
-        } else {
-            i = edge[v.getName()].iterator();
+        i = incidentEdges(u);
+        if (edge[u.getName()].size() > edge[v.getName()].size()) {
+            i = incidentEdges(v);
         }
-
-        while (i.hasNext()) {
-            GraphEdge e = i.next();
-            if (e.firstEndpoint() == u && e.secondEndpoint() == v) {
-                return e;
-            }
-            if (e.firstEndpoint() == v && e.secondEndpoint() == u) {
-                return e;
+        if (i != null) {
+            while (i.hasNext()) { //while iterator has next pop and see if its edge is the target edge
+                GraphEdge possible_edge = i.next();
+                if (possible_edge.firstEndpoint() == u && possible_edge.secondEndpoint() == v) {
+                    return possible_edge;
+                }
+                if (possible_edge.firstEndpoint() == v && possible_edge.secondEndpoint() == u) {
+                    return possible_edge;
+                }
             }
         }
-        throw new GraphException("Edge DNE");
+        throw new GraphException("getEdge: NO EDGE EXISTS");
+
     }
 
     @Override
     public boolean areAdjacent(GraphNode u, GraphNode v) throws GraphException {
 //		maybe you could use a previously written method to solve this one quickly...
-        return getEdge(u, v) != null;
+        if (!nodes_in_graph(u, v)) {
+            throw new GraphException("areAdjacent: NODES NOT IN GRAPH");
+        }
+        try {
+            getEdge(u, v);
+            return true;
+        } catch (GraphException e) {
+        }
+        return false;
+    }
+
+    private boolean nodes_in_graph(GraphNode u, GraphNode v) throws GraphException {
+        return ((getNode(u.getName()) == u) || (getNode(v.getName()) == v));
     }
 
 }
