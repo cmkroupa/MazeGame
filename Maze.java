@@ -35,7 +35,6 @@ public class Maze {
             }
             readInput(new BufferedReader(new FileReader(line)));
         } catch (Exception e) {
-            System.out.println("CREATION ERROR");
             System.out.println(e.getMessage());
         }
 
@@ -55,10 +54,8 @@ public class Maze {
             if (reverse_path != null) {
                 while (reverse_path.hasNext()) {
                     GraphNode node = reverse_path.next();
-                    System.out.print(node.getName()+"-->");
                     path.push(node);
                 }
-                System.out.println("EXIT");
                 return path.iterator();
             }
         } catch (Exception e) {
