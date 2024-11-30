@@ -14,7 +14,7 @@ public class GraphEdge {
         this.label = label;
     }
 
-//	I should probably fill in the bodies of those setters and getters
+//	setters and getters
     public GraphNode firstEndpoint() {
         return origin;
     }

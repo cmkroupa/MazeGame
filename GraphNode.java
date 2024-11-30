@@ -10,16 +10,15 @@ public class GraphNode {
         this.name = name;
         mark = false;
     }
-
-//	setters and getters, should be fun
+    //set mark
     public void mark(boolean mark) {
         this.mark = mark;
     }
-
+    //ismarked method
     public boolean isMarked() {
         return mark;
     }
-
+    //getter for int name
     public int getName() {
         return name;
     }

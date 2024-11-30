@@ -29,8 +29,9 @@ public class Graph implements GraphADT {
         try {
             getEdge(nodeu, nodev);
         } catch (GraphException e) {
-            edge[nodeu.getName()].add(new GraphEdge(nodeu, nodev, type, label));
-            edge[nodev.getName()].add(new GraphEdge(nodev, nodeu, type, label));
+            GraphEdge newEdge = new GraphEdge(nodeu, nodev, type, label);
+            edge[nodeu.getName()].add(newEdge);
+            edge[nodev.getName()].add(newEdge);
             return;
         }
         throw new GraphException("insertEdge: Edge already exists");
@@ -48,8 +49,7 @@ public class Graph implements GraphADT {
 
     @Override
     public Iterator<GraphEdge> incidentEdges(GraphNode u) throws GraphException {
-//		Select from your adjacency list the appropriate Node and return an iterator over the collection.
-//		Usually a call to .iterator() should work, unless you do something really exotic
+//		check if nodes in graph, then return iterator or null
         if (!nodes_in_graph(u, u)) {
             throw new GraphException("incidentEdges: NODES NOT IN GRAPH");
         }
@@ -95,9 +95,7 @@ public class Graph implements GraphADT {
     @Override
     public boolean areAdjacent(GraphNode u, GraphNode v) throws GraphException {
 //		maybe you could use a previously written method to solve this one quickly...
-        if (!nodes_in_graph(u, v)) {
-            throw new GraphException("areAdjacent: NODES NOT IN GRAPH");
-        }
+        //get edge, if it doesnt throw an exception return true
         try {
             getEdge(u, v);
             return true;
@@ -106,6 +104,7 @@ public class Graph implements GraphADT {
         return false;
     }
 
+    //make sure nodes in graph
     private boolean nodes_in_graph(GraphNode u, GraphNode v) throws GraphException {
         return ((getNode(u.getName()) == u) || (getNode(v.getName()) == v));
     }

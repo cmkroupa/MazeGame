@@ -54,10 +54,11 @@ public class Maze {
             Stack<GraphNode> path = new Stack<GraphNode>();
             if (reverse_path != null) {
                 while (reverse_path.hasNext()) {
-                    path.push(reverse_path.next());
+                    GraphNode node = reverse_path.next();
+                    System.out.print(node.getName()+"-->");
+                    path.push(node);
                 }
-                clear_stack();
-                printStack(path);
+                System.out.println("EXIT");
                 return path.iterator();
             }
         } catch (Exception e) {
@@ -73,7 +74,6 @@ public class Maze {
         go.mark(true);
         stack.push(go);
         if (go == exit) {
-            System.out.println("FOUND EXIT");
             return stack.iterator();
         }
 
@@ -82,15 +82,16 @@ public class Maze {
             boolean option_marked;
             while (i.hasNext()) {
                 GraphEdge option = i.next();
-                option_marked = false;
-                if (option.secondEndpoint().isMarked()) {
-                    option_marked = true;
+                GraphNode nextNode = option.firstEndpoint();
+                if (option.firstEndpoint() == go) {
+                    nextNode = option.secondEndpoint();
                 }
 
-                if (option_marked == false) {
+
+                if (nextNode.isMarked() == false) {
                     String label = option.getLabel();
-                    if ((label.equals("corridor") || label.equals("door") )&& k - option.getType() >= 0) {
-                        Iterator<GraphNode> maybe_path = DFS(option.secondEndpoint(), k - option.getType());
+                    if ((label.equals("corridor") || label.equals("door")) && k - option.getType() >= 0) {
+                        Iterator<GraphNode> maybe_path = DFS(nextNode, k - option.getType());
                         if (maybe_path != null) {
                             return stack.iterator();
                         }
@@ -105,29 +106,7 @@ public class Maze {
         return null;
     }
 
-    private void stack_iterator(){
 
-    }
-
-    private void printStack(Stack<GraphNode> path){
-        Stack<GraphNode> copy = new Stack<GraphNode>();
-        while(path.isEmpty() == false){
-            GraphNode node = path.pop();
-            System.out.print(node.getName()+"<--");
-            copy.add(node);
-        }
-        System.out.println();
-        while (copy.isEmpty() == false) {
-            path.add(copy.pop());
-        }
-        System.out.println();
-    }
-
-    private void clear_stack() {
-        while (stack.isEmpty() == false) {
-            stack.pop().mark(false);
-        }
-    }
 
     private void readInput(BufferedReader inputReader) throws IOException, GraphException {
         //		Read the values S, A, L, and k
